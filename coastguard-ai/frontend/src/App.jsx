@@ -22,12 +22,63 @@ const queryClient = new QueryClient({
 })
 
 function MapView({ currentRisk, userLocation, onLocationChange }) {
+  const [tileLayer, setTileLayer] = useState('standard')
+  const [activeRegion, setActiveRegion] = useState('all')
+  const [enabledDisasters, setEnabledDisasters] = useState(['flood', 'cyclone'])
+
+  // Handle region change with toast notification
+  const handleRegionChange = (regionId) => {
+    setActiveRegion(regionId)
+
+    // Show toast notification
+    const regionNames = {
+      north: 'Northern India',
+      south: 'Southern India',
+      east: 'Eastern India',
+      west: 'Western India',
+      all: 'All India'
+    }
+
+    // Simple toast notification (you can replace with a proper toast library)
+    const toast = document.createElement('div')
+    toast.className = 'fixed top-20 left-1/2 transform -translate-x-1/2 glass-card px-6 py-3 rounded-lg shadow-xl z-[9999] animate-fade-in'
+    toast.innerHTML = `
+      <div class="flex items-center gap-2 text-white">
+        <span class="text-lg">📍</span>
+        <span class="font-medium">Navigating to ${regionNames[regionId]}</span>
+      </div>
+    `
+    document.body.appendChild(toast)
+    setTimeout(() => {
+      toast.style.opacity = '0'
+      toast.style.transition = 'opacity 0.3s'
+      setTimeout(() => document.body.removeChild(toast), 300)
+    }, 2000)
+  }
+
+  // Handle disaster toggle
+  const handleDisasterToggle = (disasterId) => {
+    setEnabledDisasters(prev => {
+      if (prev.includes(disasterId)) {
+        return prev.filter(id => id !== disasterId)
+      } else {
+        return [...prev, disasterId]
+      }
+    })
+  }
+
   return (
     <>
       {/* Main Map */}
       <CoastGuardMap
         userLocation={userLocation}
         onLocationChange={onLocationChange}
+        tileLayer={tileLayer}
+        onTileLayerChange={setTileLayer}
+        activeRegion={activeRegion}
+        onRegionChange={handleRegionChange}
+        enabledDisasters={enabledDisasters}
+        onDisasterToggle={handleDisasterToggle}
       />
 
       {/* Risk Level Overlay */}

@@ -125,6 +125,23 @@
     }
   }
 
+  /* Fade In Animation */
+  .animate-fade-in {
+    animation: fade-in 0.3s ease-in-out;
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
   /* Glow Effect */
   .glow-ocean {
     box-shadow: 0 0 20px rgba(12, 74, 110, 0.5);
@@ -136,6 +153,19 @@
 
   .glow-safe {
     box-shadow: 0 0 20px rgba(20, 184, 166, 0.5);
+  }
+
+  /* Glow Animation */
+  @keyframes glow {
+
+    0%,
+    100% {
+      box-shadow: 0 0 40px rgba(220, 38, 38, 0.5);
+    }
+
+    50% {
+      box-shadow: 0 0 60px rgba(220, 38, 38, 0.8);
+    }
   }
 
   /* Gradient Text */
@@ -184,4 +214,20 @@
 
 .leaflet-popup-tip {
   @apply bg-white/10;
+}
+
+/* Mobile Responsive Map Controls */
+@media (max-width: 640px) {
+  .map-overlay {
+    @apply m-2 p-3;
+  }
+
+  .glass-card {
+    @apply text-sm;
+  }
+
+  /* Make legend more compact on mobile */
+  .leaflet-bottom.leaflet-left {
+    max-width: 90vw;
+  }
 }

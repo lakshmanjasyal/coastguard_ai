@@ -4,6 +4,12 @@ import { MapContainer, TileLayer, GeoJSON, Marker, Popup, useMap } from 'react-l
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
 import LocationButton from './LocationButton'
+import MapLayerControl from './MapLayerControl'
+import RegionSelector from './RegionSelector'
+import DisasterOverlay from './DisasterOverlay'
+import DisasterLegend from './DisasterLegend'
+import MapAnimator from './MapAnimator'
+import { TILE_LAYERS, INDIAN_REGIONS } from '../../data/mapData'
 
 // Fix for default marker icons in Leaflet
 delete L.Icon.Default.prototype._getIconUrl
@@ -160,8 +166,20 @@ LocationMarker.propTypes = {
 /**
  * CoastGuardMap - Main interactive map component
  */
-const CoastGuardMap = ({ userLocation, onLocationChange }) => {
+const CoastGuardMap = ({
+    userLocation,
+    onLocationChange,
+    tileLayer = 'standard',
+    onTileLayerChange,
+    activeRegion = 'all',
+    onRegionChange,
+    enabledDisasters = ['flood', 'cyclone'],
+    onDisasterToggle
+}) => {
     const mapRef = useRef(null)
+
+    // Get current region data for map animation
+    const currentRegion = INDIAN_REGIONS[activeRegion] || INDIAN_REGIONS.all
 
     // Style function for risk zones
     const getZoneStyle = (feature) => {
@@ -234,13 +252,24 @@ const CoastGuardMap = ({ userLocation, onLocationChange }) => {
             className="h-full w-full z-0"
             ref={mapRef}
         >
-            {/* Dark mode tile layer */}
+            {/* Map animator for smooth region transitions */}
+            <MapAnimator center={currentRegion.center} zoom={currentRegion.zoom} />
+
+            {/* Dynamic tile layer based on selection */}
             <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-                url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                key={tileLayer}
+                attribution={TILE_LAYERS[tileLayer]?.attribution || TILE_LAYERS.standard.attribution}
+                url={TILE_LAYERS[tileLayer]?.url || TILE_LAYERS.standard.url}
+                maxZoom={TILE_LAYERS[tileLayer]?.maxZoom || 19}
             />
 
-            {/* Risk zones */}
+            {/* Disaster overlays - replaces old risk zones */}
+            <DisasterOverlay
+                activeRegion={activeRegion}
+                enabledDisasters={enabledDisasters}
+            />
+
+            {/* Risk zones - keeping for backward compatibility */}
             <GeoJSON
                 data={mockRiskZones}
                 style={getZoneStyle}
@@ -266,6 +295,35 @@ const CoastGuardMap = ({ userLocation, onLocationChange }) => {
             {/* User location marker */}
             <LocationMarker onLocationChange={onLocationChange} />
 
+            {/* Top-right controls */}
+            <div className="absolute top-4 right-4 z-[1000] flex gap-2">
+                {/* Region Selector */}
+                {onRegionChange && (
+                    <RegionSelector
+                        activeRegion={activeRegion}
+                        onRegionSelect={onRegionChange}
+                    />
+                )}
+
+                {/* Map Layer Control */}
+                {onTileLayerChange && (
+                    <MapLayerControl
+                        currentLayer={tileLayer}
+                        onLayerChange={onTileLayerChange}
+                    />
+                )}
+            </div>
+
+            {/* Bottom-left disaster legend */}
+            {onDisasterToggle && (
+                <div className="absolute bottom-20 left-4 z-[1000] max-w-xs">
+                    <DisasterLegend
+                        enabledDisasters={enabledDisasters}
+                        onDisasterToggle={onDisasterToggle}
+                    />
+                </div>
+            )}
+
             {/* Manual location button */}
             <LocationButton />
         </MapContainer>
@@ -275,6 +333,12 @@ const CoastGuardMap = ({ userLocation, onLocationChange }) => {
 CoastGuardMap.propTypes = {
     userLocation: PropTypes.object,
     onLocationChange: PropTypes.func,
+    tileLayer: PropTypes.string,
+    onTileLayerChange: PropTypes.func,
+    activeRegion: PropTypes.string,
+    onRegionChange: PropTypes.func,
+    enabledDisasters: PropTypes.arrayOf(PropTypes.string),
+    onDisasterToggle: PropTypes.func,
 }
 
 export default CoastGuardMap
